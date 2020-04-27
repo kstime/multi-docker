@@ -1,0 +1,22 @@
+sudo: required
+services: 
+    - docker
+
+before_install:
+    - docker build -t kpsirish/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run kpsirish/react-test npm test -- --coverage
+
+after_success:
+    - docker build -t kpsirish/multi-client ./client
+    - docker build -t kpsirish/multi-nginx ./nginx
+    - docker build -t kpsirish/multi-server ./server
+    - docker build -t kpsirish/multi-worker ./worker
+    # Log in to the docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Take those images and push them to docker hub
+    - docker push kpsirish/multi-client
+    - docker push kpsirish/multi-nginx
+    - docker push kpsirish/multi-server
+    - docker push kpsirish/multi-worker
